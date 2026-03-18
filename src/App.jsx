@@ -338,7 +338,7 @@ function App() {
                   <p className="text-sm uppercase tracking-[0.25em] text-brand-muted">SrijanVerse</p>
                   <h1 className="mt-2 text-3xl font-semibold leading-tight md:text-4xl">Your Music</h1>
                   <p className="mt-2 max-w-xl text-sm text-brand-muted md:text-base">
-                    A curated collection of songs by Srijan Dwivedi.
+                    Your uploaded collection of songs.
                   </p>
                 </div>
               </div>
