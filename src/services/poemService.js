@@ -1,5 +1,6 @@
 import { addDoc, collection, getDocs, onSnapshot, serverTimestamp } from 'firebase/firestore'
 import { db } from '../config/firebase'
+import { getFirebaseActionErrorMessage } from './firebaseErrorService'
 
 const poemsCollection = collection(db, 'poems')
 
@@ -40,20 +41,24 @@ export const subscribeToFirebasePoems = (onData, onError) =>
   )
 
 export const createFirebasePoem = async (poem) => {
-  const payload = {
-    title: poem.title,
-    excerpt: poem.excerpt,
-    content: poem.content,
-    author: poem.author || 'Srijan Dwivedi',
-    date: poem.date || new Date().toISOString().split('T')[0],
-    createdAt: serverTimestamp(),
-  }
+  try {
+    const payload = {
+      title: poem.title,
+      excerpt: poem.excerpt,
+      content: poem.content,
+      author: poem.author || 'Srijan Dwivedi',
+      date: poem.date || new Date().toISOString().split('T')[0],
+      createdAt: serverTimestamp(),
+    }
 
-  const docRef = await addDoc(poemsCollection, payload)
+    const docRef = await addDoc(poemsCollection, payload)
 
-  return {
-    id: docRef.id,
-    ...payload,
-    source: 'firebase',
+    return {
+      id: docRef.id,
+      ...payload,
+      source: 'firebase',
+    }
+  } catch (error) {
+    throw new Error(getFirebaseActionErrorMessage(error, 'publish poem'))
   }
 }

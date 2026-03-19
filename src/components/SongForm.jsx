@@ -47,8 +47,8 @@ function SongForm({ onAddSong, onClose }) {
         lyricsFile,
       })
       onClose()
-    } catch {
-      setSubmitError('Could not upload song to Firebase. Please try again.')
+    } catch (error) {
+      setSubmitError(error?.message || 'Could not upload song to Firebase. Please try again.')
     } finally {
       setIsSubmitting(false)
     }

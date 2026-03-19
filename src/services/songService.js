@@ -1,6 +1,7 @@
 import { addDoc, collection, onSnapshot, serverTimestamp } from 'firebase/firestore'
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage'
 import { db, storage } from '../config/firebase'
+import { getFirebaseActionErrorMessage } from './firebaseErrorService'
 
 const songsCollection = collection(db, 'songs')
 
@@ -44,26 +45,30 @@ export const subscribeToFirebaseSongs = (onData, onError) =>
   )
 
 export const createFirebaseSong = async ({ title, artist, audioFile, coverFile, lyricsFile }) => {
-  const [file, cover, lyrics] = await Promise.all([
-    uploadAsset(audioFile, 'songs'),
-    uploadAsset(coverFile, 'covers'),
-    lyricsFile ? uploadAsset(lyricsFile, 'lyrics') : Promise.resolve(''),
-  ])
+  try {
+    const [file, cover, lyrics] = await Promise.all([
+      uploadAsset(audioFile, 'songs'),
+      uploadAsset(coverFile, 'covers'),
+      lyricsFile ? uploadAsset(lyricsFile, 'lyrics') : Promise.resolve(''),
+    ])
 
-  const payload = {
-    title: title.trim(),
-    artist: artist.trim() || 'Srijan Dwivedi',
-    file,
-    cover,
-    lyrics,
-    createdAt: serverTimestamp(),
-  }
+    const payload = {
+      title: title.trim(),
+      artist: artist.trim() || 'Srijan Dwivedi',
+      file,
+      cover,
+      lyrics,
+      createdAt: serverTimestamp(),
+    }
 
-  const docRef = await addDoc(songsCollection, payload)
+    const docRef = await addDoc(songsCollection, payload)
 
-  return {
-    id: docRef.id,
-    ...payload,
-    source: 'firebase',
+    return {
+      id: docRef.id,
+      ...payload,
+      source: 'firebase',
+    }
+  } catch (error) {
+    throw new Error(getFirebaseActionErrorMessage(error, 'upload song'))
   }
 }

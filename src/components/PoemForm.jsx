@@ -51,8 +51,8 @@ function PoemForm({ onAddPoem, onClose }) {
       await onAddPoem(newPoem)
       setFormData({ title: '', excerpt: '', content: '' })
       onClose()
-    } catch {
-      setSubmitError('Could not save poem to Firebase. Please try again.')
+    } catch (error) {
+      setSubmitError(error?.message || 'Could not save poem to Firebase. Please try again.')
     } finally {
       setIsSubmitting(false)
     }
