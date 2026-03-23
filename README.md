@@ -42,10 +42,10 @@ Tailwind is configured using:
 
 Add your own media files in the `public` directory:
 
-- `public/covers/song1.jpg`
-- `public/covers/song2.jpg`
 - `public/songs/song1.mp3`
 - `public/songs/song2.mp3`
+- `public/lyrics/song1.lrc`
+- `public/lyrics/song2.lrc`
 
 If audio files are missing or invalid, the player will show an error fallback.
 

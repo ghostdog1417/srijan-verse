@@ -6,6 +6,17 @@
 
 :root {
   color-scheme: dark;
+  --color-bg: 29 21 43;
+  --color-surface: 51 35 69;
+  --color-accent: 198 162 64;
+  --color-muted: 222 210 184;
+  --color-text: 247 242 232;
+  --color-track: 107 84 132;
+  --color-scroll-track: 36 26 51;
+  --color-scroll-thumb: 92 71 114;
+  --color-selection: rgba(198, 162, 64, 0.33);
+  --color-selection-text: #fcf6e8;
+  --brand-accent-solid: #c6a240;
 }
 
 * {
@@ -20,8 +31,8 @@ body,
 
 body {
   margin: 0;
-  background: #121212;
-  color: #ffffff;
+  background: rgb(var(--color-bg));
+  color: rgb(var(--color-text));
   font-family: 'Manrope', sans-serif;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -29,8 +40,8 @@ body {
 }
 
 ::selection {
-  background: rgba(29, 185, 84, 0.35);
-  color: #ffffff;
+  background: var(--color-selection);
+  color: var(--color-selection-text);
 }
 
 .progress-slider::-webkit-slider-thumb {
@@ -38,8 +49,8 @@ body {
   width: 14px;
   height: 14px;
   border-radius: 9999px;
-  background: #1db954;
-  box-shadow: 0 0 0 3px rgba(29, 185, 84, 0.25);
+  background: var(--brand-accent-solid);
+  box-shadow: 0 0 0 3px rgba(198, 162, 64, 0.25);
 }
 
 .progress-slider::-moz-range-thumb {
@@ -47,8 +58,8 @@ body {
   height: 14px;
   border: none;
   border-radius: 9999px;
-  background: #1db954;
-  box-shadow: 0 0 0 3px rgba(29, 185, 84, 0.25);
+  background: var(--brand-accent-solid);
+  box-shadow: 0 0 0 3px rgba(198, 162, 64, 0.25);
 }
 
 ::-webkit-scrollbar {
@@ -56,10 +67,89 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #2a2a2a;
+  background: rgb(var(--color-scroll-thumb));
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #121212;
+  background: rgb(var(--color-scroll-track));
+}
+
+body.theme-light {
+  color-scheme: light;
+  --color-bg: 244 234 202;
+  --color-surface: 233 219 181;
+  --color-accent: 66 46 84;
+  --color-muted: 92 74 58;
+  --color-text: 31 25 20;
+  --color-track: 191 172 138;
+  --color-scroll-track: 232 218 179;
+  --color-scroll-thumb: 156 134 102;
+  --color-selection: rgba(66, 46, 84, 0.25);
+  --color-selection-text: #21171b;
+  --brand-accent-solid: #422e54;
+}
+
+body.theme-light ::selection {
+  background: var(--color-selection);
+  color: var(--color-selection-text);
+}
+
+body.theme-light [class*='bg-brand-bg'] {
+  background-color: rgb(var(--color-bg)) !important;
+}
+
+body.theme-light [class*='bg-brand-surface'] {
+  background-color: rgb(var(--color-surface) / 0.95) !important;
+}
+
+body.theme-light [class*='text-white'] {
+  color: rgb(var(--color-text)) !important;
+}
+
+body.theme-light [class*='text-brand-muted'] {
+  color: rgb(var(--color-muted)) !important;
+}
+
+body.theme-light [class*='border-white'] {
+  border-color: rgba(66, 46, 84, 0.25) !important;
+}
+
+body.theme-light [class*='bg-black/'] {
+  background-color: rgba(104, 80, 53, 0.12) !important;
+}
+
+body.theme-light [class*='bg-white/5'] {
+  background-color: rgba(255, 250, 238, 0.65) !important;
+}
+
+body.theme-light [class*='bg-white/10'] {
+  background-color: rgba(255, 250, 238, 0.78) !important;
+}
+
+body.theme-light [class*='bg-white/15'] {
+  background-color: rgba(255, 250, 238, 0.84) !important;
+}
+
+body.theme-light [class*='bg-white/20'] {
+  background-color: rgba(255, 250, 238, 0.9) !important;
+}
+
+body.theme-light [class*='bg-brand-accent'] {
+  color: #f8f1df !important;
+}
+
+body.theme-light .theme-toggle-button {
+  background: rgba(255, 246, 223, 0.92);
+  color: rgb(var(--color-text));
+  border-color: rgba(66, 46, 84, 0.32);
+}
+
+body.theme-light .theme-toggle-button:hover {
+  background: rgba(255, 241, 208, 1);
+  border-color: rgba(66, 46, 84, 0.45);
+}
+
+input[type='range'] {
+  accent-color: var(--brand-accent-solid);
 }

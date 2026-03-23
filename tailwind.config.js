@@ -5,10 +5,10 @@ export default {
     extend: {
       colors: {
         brand: {
-          bg: '#121212',
-          surface: '#181818',
-          accent: '#1DB954',
-          muted: '#B3B3B3',
+          bg: 'rgb(var(--color-bg) / <alpha-value>)',
+          surface: 'rgb(var(--color-surface) / <alpha-value>)',
+          accent: 'rgb(var(--color-accent) / <alpha-value>)',
+          muted: 'rgb(var(--color-muted) / <alpha-value>)',
         },
       },
       boxShadow: {

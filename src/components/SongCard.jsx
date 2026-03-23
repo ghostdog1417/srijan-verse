@@ -1,47 +1,82 @@
-import { Pause, Play } from 'lucide-react'
-import { useState } from 'react'
+import { Heart, Pause, Play, Plus } from 'lucide-react'
 
-function SongCard({ song, isActive, isPlaying, onPlay }) {
-  const [coverBroken, setCoverBroken] = useState(false)
-
+function SongCard({ song, isActive, isPlaying, onPlay, isLiked = false, onToggleLike, onAddToQueue }) {
   return (
-    <button
-      type="button"
+    <div
       onClick={onPlay}
-      className={`group relative overflow-hidden rounded-2xl border p-4 text-left transition-all duration-300 hover:scale-105 ${
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          onPlay()
+        }
+      }}
+      className={`flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-left transition-all duration-300 cursor-pointer md:px-4 md:py-3 ${
         isActive
-          ? 'border-brand-accent/80 bg-brand-accent/10 shadow-soft'
+          ? 'border-brand-accent/80 bg-brand-accent/10'
           : 'border-white/10 bg-brand-surface/70 hover:border-white/20 hover:bg-brand-surface/90'
       }`}
     >
-      <div className="relative overflow-hidden rounded-xl">
-        {!coverBroken ? (
-          <img
-            src={song.cover}
-            alt={`${song.title} cover`}
-            className="h-48 w-full object-cover transition-transform duration-500 group-hover:scale-110"
-            onError={() => setCoverBroken(true)}
-          />
-        ) : (
-          <div className="flex h-48 w-full items-center justify-center bg-gradient-to-br from-zinc-700 via-zinc-800 to-black text-lg font-semibold text-white/80">
-            {song.title}
-          </div>
-        )}
-
-        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-
-        <div className="absolute bottom-4 right-4 translate-y-2 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
-          <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-brand-accent text-black shadow-soft">
-            {isPlaying ? <Pause size={22} /> : <Play size={22} className="ml-0.5" />}
-          </span>
+      {/* Thumbnail */}
+      <div className="relative flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden md:w-14 md:h-14">
+        <div className="w-full h-full bg-gradient-to-br from-zinc-700 to-zinc-900 flex items-center justify-center text-xs font-bold text-white/60">
+          ♪
         </div>
       </div>
 
-      <div className="mt-4">
-        <h3 className="truncate text-base font-semibold text-white">{song.title}</h3>
-        <p className="mt-1 text-sm text-brand-muted">{song.artist}</p>
+      {/* Info */}
+      <div className="flex-1 min-w-0">
+        <h3 className="truncate text-xs font-semibold text-white md:text-sm">{song.title}</h3>
+        <p className="truncate text-xs text-brand-muted">
+          {song.album ? `${song.artist} • ${song.album}` : song.artist}
+        </p>
       </div>
-    </button>
+
+      <div className="flex items-center gap-1">
+        {onToggleLike && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              onToggleLike()
+            }}
+            className={`rounded-full p-2 transition-all duration-300 hover:scale-110 ${
+              isLiked ? 'text-brand-accent' : 'text-brand-muted hover:text-white'
+            }`}
+            aria-label={isLiked ? 'Unlike song' : 'Like song'}
+          >
+            <Heart size={14} fill={isLiked ? 'currentColor' : 'none'} className="md:size-4" />
+          </button>
+        )}
+
+        {onAddToQueue && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              onAddToQueue()
+            }}
+            className="rounded-full p-2 text-brand-muted transition-all duration-300 hover:scale-110 hover:text-white"
+            aria-label="Add to queue"
+          >
+            <Plus size={14} className="md:size-4" />
+          </button>
+        )}
+
+        {/* Play Button */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            onPlay()
+          }}
+          className="flex-shrink-0 rounded-full bg-brand-accent p-1.5 text-black transition-all duration-300 hover:scale-110 md:p-2"
+          aria-label={isPlaying ? 'Pause song' : 'Play song'}
+        >
+          {isPlaying ? <Pause size={14} className="md:size-4" /> : <Play size={14} className="ml-0.5 md:ml-1 md:size-4" />}
+        </button>
+      </div>
+    </div>
   )
 }
 
