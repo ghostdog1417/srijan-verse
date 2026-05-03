@@ -239,6 +239,10 @@ function Player({
 
     console.log('[Play] Starting playback from:', audio.src, 'currentTime:', audio.currentTime)
     try {
+      if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+        await audioContextRef.current.resume()
+      }
+
       const playPromise = audio.play()
       console.log('[Play] Play promise created:', !!playPromise)
       await playPromise
@@ -268,6 +272,10 @@ function Player({
 
       try {
         console.log('[Audio] Sync playback attempt:', audio.src)
+        if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+          await audioContextRef.current.resume()
+        }
+
         await audio.play()
       } catch (error) {
         // Ignore transient source-switch aborts; playback retries on canplay.

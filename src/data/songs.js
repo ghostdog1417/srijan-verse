@@ -175,7 +175,7 @@ const songs = songPaths.map((songPath, index) => {
 	}
 })
 
-console.log('[songs.js] Exporting', songs.length, 'minimal songs; parsing metadata in background')
+console.log('[songs.js] Exporting', songs.length, 'minimal songs; parsing metadata in background');
 
 // Parse metadata sequentially in background to avoid many concurrent requests that can abort.
 (async function parseInBackground() {
