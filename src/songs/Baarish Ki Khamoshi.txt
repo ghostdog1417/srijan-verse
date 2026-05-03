@@ -1,6 +1,0 @@
-﻿Id: 
-Title: Baarish Ki Khamoshi
-Artist: Srijan Dwivedi
-Date: 2026-03-19
-File: /songs/Baarish Ki Khamoshi.mp3
-Lyrics: /lyrics/Baarish Ki Khamoshi.lrc

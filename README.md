@@ -55,33 +55,33 @@ SrijanVerse includes:
 - Recently played section.
 - Recommended tracks section based on current song artist/album and liked songs.
 - Mood playlists auto-grouped by inferred moods:
-	- Late Night
-	- Romance
-	- Focus
-	- Unwind
+  - Late Night
+  - Romance
+  - Focus
+  - Unwind
 
 ### Songs tab features
 
-- Full songs list rendering from text metadata files.
+- Full songs list rendering from MP3 metadata tags.
 - Search across title, artist, and album.
 - Favorites-only filter.
 - Artist filter.
 - Album filter.
 - Mood filter.
 - Sort options:
-	- Default
-	- Title A-Z
-	- Title Z-A
-	- Artist A-Z
-	- Recently played first
-	- Most played first
+  - Default
+  - Title A-Z
+  - Title Z-A
+  - Artist A-Z
+  - Recently played first
+  - Most played first
 - Optional group-by-album view.
 - Per-song quick actions:
-	- Play
-	- Like/unlike
-	- Add to queue
-	- Jump to artist page
-	- Jump to album page
+  - Play
+  - Like/unlike
+  - Add to queue
+  - Jump to artist page
+  - Jump to album page
 
 ### Artist pages
 
@@ -104,10 +104,10 @@ SrijanVerse includes:
 - Dedicated Queue tab with current track context.
 - Queue list with position indicators.
 - Queue item controls:
-	- Play selected queue position
-	- Move up
-	- Move down
-	- Remove
+  - Play selected queue position
+  - Move up
+  - Move down
+  - Remove
 - "Clear Queue" action that keeps only current song.
 - Queue preview in player page.
 
@@ -127,20 +127,20 @@ SrijanVerse includes:
 - Recently Liked (ordered by like timestamp).
 - Never Played.
 - Listening stats cards:
-	- Recent plays
-	- Top artist (from recent history)
-	- Albums explored
-	- Favorites rate
+  - Recent plays
+  - Top artist (from recent history)
+  - Albums explored
+  - Favorites rate
 
 ### Song diary
 
 - Attach personal notes to each song.
 - Mood tagging per note:
-	- Memory
-	- Healing
-	- Heartbreak
-	- Motivation
-	- Peace
+  - Memory
+  - Healing
+  - Heartbreak
+  - Motivation
+  - Peace
 - Notes saved with timestamp and listed in reverse-chronological order.
 - One-click playback from saved notes.
 
@@ -192,11 +192,11 @@ Sidebar tabs currently available:
 ### Audio enhancements
 
 - Web Audio based 3-band equalizer presets:
-	- Flat
-	- Bass Boost
-	- Vocal Boost
-	- Treble Boost
-	- Night Mode
+  - Flat
+  - Bass Boost
+  - Vocal Boost
+  - Treble Boost
+  - Night Mode
 - Real-time visualizer using analyser node with animated bars.
 
 ### Lyrics
@@ -247,9 +247,9 @@ All persistence failures (private mode/quota) are handled gracefully to keep the
 
 - Service worker registered from `src/main.jsx`.
 - App shell is pre-cached on install:
-	- `/`
-	- `/index.html`
-	- `/manifest.webmanifest`
+  - `/`
+  - `/index.html`
+  - `/manifest.webmanifest`
 - Old caches are cleaned on activate.
 - Navigation requests fall back to `/index.html` when offline.
 - Static GET requests use cache-first with network update.
@@ -258,31 +258,29 @@ All persistence failures (private mode/quota) are handled gracefully to keep the
 
 ### Songs
 
-Songs are loaded automatically from `src/songs/*.txt` using `import.meta.glob`.
+Songs are loaded automatically from `public/songs/*.mp3` and parsed at runtime.
 
-Song metadata fields:
+Song metadata fields (from MP3 tags):
 
-- `Id` (optional)
 - `Title`
 - `Artist`
 - `Album` (optional)
-- `Date` (`YYYY-MM-DD` recommended)
-- `File` (required; URL in `public/songs`)
-- `Lyrics` (optional; URL in `public/lyrics`)
+- `Date` (from tag date/year when available)
+- Embedded cover art (if present in ID3/APIC)
 
-Songs are sorted newest-first by `Date`.
+Runtime-generated song fields:
 
-Example:
+- `id` from MP3 filename
+- `file` path from `public/songs`
+- `lyrics` path auto-derived as `/lyrics/<song-file-name>.lrc`
 
-```txt
-Id: 1
-Title: Bas Tum Hi Reh Gaye
-Artist: Srijan Dwivedi
-Album: Midnight Chapters
-Date: 2026-03-19
-File: /songs/Bas Tum Hi Reh Gaye.mp3
-Lyrics: /lyrics/Bas Tum Hi Reh Gaye.lrc
-```
+Songs are sorted newest-first by parsed `Date`.
+
+Tag expectations:
+
+- Place MP3s in `public/songs`.
+- Add matching `.lrc` files in `public/lyrics` when lyrics are available.
+- Embed album art in each MP3 if you want thumbnails shown in the UI.
 
 ### Poems
 
@@ -309,7 +307,7 @@ Under the silver glow of the moon, memories dance,
 Like fireflies caught in a glass of moments.
 ```
 
-Note: `src/poems/_template.txt.example` exists. The songs README mentions a songs template, but there is currently no `src/songs/_template.txt.example` file in this repository.
+Note: `src/poems/_template.txt.example` exists for poem formatting.
 
 ## Installation and Local Development
 

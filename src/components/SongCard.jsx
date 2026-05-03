@@ -19,9 +19,18 @@ function SongCard({ song, isActive, isPlaying, onPlay, isLiked = false, onToggle
     >
       {/* Thumbnail */}
       <div className="relative flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden md:w-14 md:h-14">
-        <div className="w-full h-full bg-gradient-to-br from-zinc-700 to-zinc-900 flex items-center justify-center text-xs font-bold text-white/60">
-          ♪
-        </div>
+        {song.coverUrl ? (
+          <img
+            src={song.coverUrl}
+            alt={`${song.title} cover`}
+            className="h-full w-full object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-zinc-700 to-zinc-900 flex items-center justify-center text-xs font-bold text-white/60">
+            ♪
+          </div>
+        )}
       </div>
 
       {/* Info */}

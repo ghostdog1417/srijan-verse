@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Moon, Play, Sun } from 'lucide-react'
 import Sidebar from './components/Sidebar'
 import SongCard from './components/SongCard'
@@ -143,7 +143,19 @@ function App() {
   const [songDiary, setSongDiary] = useState(() => readStoredJSON(STORAGE_KEYS.songDiary, {}))
   const [playStats, setPlayStats] = useState(() => readStoredJSON(STORAGE_KEYS.playStats, {}))
   const [playEvents, setPlayEvents] = useState(() => readStoredJSON(STORAGE_KEYS.playEvents, []))
-  const [likedAtMap, setLikedAtMap] = useState(() => readStoredJSON(STORAGE_KEYS.likedAtMap, {}))
+  const [likedAtMap, setLikedAtMap] = useState(() => {
+    const stored = readStoredJSON(STORAGE_KEYS.likedAtMap, {})
+    if (Object.keys(stored).length > 0) {
+      return stored
+    }
+
+    const seededLikedSongIds = readStoredJSON(STORAGE_KEYS.likedSongIds, [])
+    const now = Date.now()
+    return seededLikedSongIds.reduce((acc, songId, index) => {
+      acc[songId] = now - index * 1000
+      return acc
+    }, {})
+  })
   const [visualizerEnabled, setVisualizerEnabled] = useState(() => readStoredBoolean(STORAGE_KEYS.visualizerEnabled, true))
   const [crossfadeEnabled, setCrossfadeEnabled] = useState(() => readStoredBoolean(STORAGE_KEYS.crossfadeEnabled, false))
   const [crossfadeSeconds, setCrossfadeSeconds] = useState(() => readStoredNumber(STORAGE_KEYS.crossfadeSeconds, 2.5))
@@ -310,14 +322,14 @@ function App() {
     }
   }, [sleepTimerMinutes])
 
-  const markSongAsRecentlyPlayed = (songIndex) => {
+  const markSongAsRecentlyPlayed = useCallback((songIndex) => {
     const song = songs[songIndex]
     if (!song) {
       return
     }
 
     setRecentlyPlayedIds((prev) => [song.id, ...prev.filter((id) => id !== song.id)].slice(0, 20))
-  }
+  }, [])
 
   const currentSong = useMemo(
     () => {
@@ -459,7 +471,6 @@ function App() {
 
   const activeArtistName = selectedArtist || artistList[0]?.name || ''
   const activeArtistEntries = artistCatalog[activeArtistName] || []
-  const activeArtistMeta = artistList.find((artist) => artist.name === activeArtistName)
 
   const activeAlbumName = selectedAlbum || albumList[0]?.name || ''
   const activeAlbumEntries = albumCatalog[activeAlbumName] || []
@@ -532,8 +543,14 @@ function App() {
   const currentSongDiary = songDiary[currentSong.id] || { mood: 'Memory', note: '' }
 
   const smartPlaylists = useMemo(() => {
-    const now = Date.now()
-    const weekAgo = now - 7 * 24 * 60 * 60 * 1000
+    const latestPlayTimestamp = playEvents.reduce((maxTimestamp, event) => {
+      if (Number.isFinite(event?.at)) {
+        return Math.max(maxTimestamp, event.at)
+      }
+
+      return maxTimestamp
+    }, 0)
+    const weekAgo = latestPlayTimestamp - 7 * 24 * 60 * 60 * 1000
     const weeklyCounts = {}
 
     playEvents.forEach((event) => {
@@ -631,22 +648,14 @@ function App() {
     }
 
     lastTrackedSongIdRef.current = currentSong.id
-    updatePlaybackStats(currentSong.id, 'play')
-  }, [currentSong.id, isPlaying])
+    const timeoutId = window.setTimeout(() => {
+      updatePlaybackStats(currentSong.id, 'play')
+    }, 0)
 
-  useEffect(() => {
-    if (!likedSongIds.length || Object.keys(likedAtMap).length > 0) {
-      return
+    return () => {
+      window.clearTimeout(timeoutId)
     }
-
-    const now = Date.now()
-    const seeded = likedSongIds.reduce((acc, songId, index) => {
-      acc[songId] = now - index * 1000
-      return acc
-    }, {})
-
-    setLikedAtMap(seeded)
-  }, [likedAtMap, likedSongIds])
+  }, [currentSong.id, isPlaying])
 
   const promptInstall = async () => {
     if (!installPromptEvent) {
@@ -987,14 +996,33 @@ function App() {
 
     const linkedEntry = songEntries.find((entry) => String(entry.song.id) === linkedSongId)
     if (linkedEntry) {
-      playFromQueue(linkedEntry.index, allSongIndexes)
+      const frameId = window.requestAnimationFrame(() => {
+        setPlayQueue(allSongIndexes)
+        const nextPosition = Math.max(allSongIndexes.indexOf(linkedEntry.index), 0)
+        setQueuePosition(nextPosition)
+        setCurrentSongIndex(linkedEntry.index)
+        setIsPlaying(true)
+        markSongAsRecentlyPlayed(linkedEntry.index)
+      })
+
+      return () => {
+        window.cancelAnimationFrame(frameId)
+      }
     }
-  }, [])
+
+    return undefined
+  }, [allSongIndexes, markSongAsRecentlyPlayed, songEntries])
 
   useEffect(() => {
-    setDiaryDraft(currentSongDiary.note || '')
-    setDiaryMood(currentSongDiary.mood || 'Memory')
-  }, [currentSong.id])
+    const frameId = window.requestAnimationFrame(() => {
+      setDiaryDraft(currentSongDiary.note || '')
+      setDiaryMood(currentSongDiary.mood || 'Memory')
+    })
+
+    return () => {
+      window.cancelAnimationFrame(frameId)
+    }
+  }, [currentSong.id, currentSongDiary.mood, currentSongDiary.note])
 
   return (
     <div className="relative min-h-screen bg-brand-bg text-white">

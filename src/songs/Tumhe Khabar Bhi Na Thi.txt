@@ -1,6 +1,0 @@
-﻿Id: 
-Title: Tumhe Khabar Bhi Na Thi
-Artist: Srijan Dwivedi
-Date: 2026-03-19
-File: /songs/Tumhe Khabar Bhi Na Thi.mp3
-Lyrics: /lyrics/Tumhe Khabar Bhi Na Thi.lrc

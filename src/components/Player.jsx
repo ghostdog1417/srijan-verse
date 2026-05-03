@@ -572,8 +572,16 @@ function Player({
           <div className="mx-auto grid w-full max-w-[1200px] grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
             <section className="rounded-2xl border border-white/10 bg-white/5 p-5 md:p-6">
               <div className="mb-6 flex items-center gap-4">
-                <div className="h-20 w-20 rounded-xl bg-gradient-to-br from-zinc-700 via-zinc-800 to-black text-2xl font-bold text-white flex items-center justify-center">
-                  {currentSong.title.slice(0, 2).toUpperCase()}
+                <div className="h-20 w-20 overflow-hidden rounded-xl bg-gradient-to-br from-zinc-700 via-zinc-800 to-black text-2xl font-bold text-white flex items-center justify-center">
+                  {currentSong.coverUrl ? (
+                    <img
+                      src={currentSong.coverUrl}
+                      alt={`${currentSong.title} cover`}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    currentSong.title.slice(0, 2).toUpperCase()
+                  )}
                 </div>
                 <div className="min-w-0">
                   <h3 className="truncate text-xl font-semibold text-white">{currentSong.title}</h3>
@@ -700,7 +708,17 @@ function Player({
       <footer className="fixed bottom-0 left-0 right-0 z-40 border-t border-white/10 bg-black/30 px-3 py-2 backdrop-blur-2xl md:px-8 md:py-3">
         <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 md:px-4 md:py-3">
           <button type="button" onClick={onOpenPlayerPage} className="flex min-w-0 flex-1 items-center gap-3 text-left">
-            <div className="h-10 w-10 flex-shrink-0 rounded-lg bg-gradient-to-br from-zinc-700 to-zinc-900 flex items-center justify-center text-xs font-semibold text-white/70">SV</div>
+            <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg bg-gradient-to-br from-zinc-700 to-zinc-900 flex items-center justify-center text-xs font-semibold text-white/70">
+              {currentSong.coverUrl ? (
+                <img
+                  src={currentSong.coverUrl}
+                  alt={`${currentSong.title} cover`}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                'SV'
+              )}
+            </div>
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-white">{currentSong.title}</p>
               <p className="truncate text-xs text-brand-muted">{songMetaLabel}</p>
