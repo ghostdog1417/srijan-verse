@@ -1,4 +1,4 @@
-import { parseBlob } from 'music-metadata-browser'
+import jsmediatags from 'jsmediatags'
 
 const songModules = import.meta.glob('../songs/*.mp3', {
 	eager: true,
@@ -12,9 +12,41 @@ const lyricModules = import.meta.glob('../lyrics/*.lrc', {
 	query: '?raw',
 })
 
-const getFileNameWithoutExt = (path) => {
+const decodeFileName = (path) => {
 	const fileName = path.split('/').pop() || 'untitled.mp3'
+	try {
+		return decodeURIComponent(fileName)
+	} catch {
+		return fileName
+	}
+}
+
+const getFileNameWithoutExt = (path) => {
+	const fileName = decodeFileName(path)
 	return fileName.replace(/\.mp3$/i, '')
+}
+
+const getTagText = (...values) => {
+	for (const value of values) {
+		if (Array.isArray(value)) {
+			const joined = value.map((entry) => String(entry || '').trim()).filter(Boolean).join(' / ')
+			if (joined) {
+				return joined
+			}
+			continue
+		}
+
+		if (value === null || value === undefined) {
+			continue
+		}
+
+		const text = String(value).trim()
+		if (text) {
+			return text
+		}
+	}
+
+	return ''
 }
 
 const normalizeDate = (common) => {
@@ -53,62 +85,121 @@ const buildLyricMap = () => {
 
 const lyricTextMap = buildLyricMap()
 
-const parseSongMetadata = async (songPath) => {
+const parseSongMetadata = (songPath) => {
 	const stem = getFileNameWithoutExt(songPath)
 	const fallbackTitle = stem
 
-	try {
-		const response = await fetch(songPath)
-		if (!response.ok) {
-			throw new Error(`Unable to fetch ${songPath}`)
-		}
+	return new Promise(async (resolve) => {
+		try {
+			console.log('[songs.js] Fetching', songPath)
+			const res = await fetch(songPath)
+			console.log('[songs.js] Fetch response for', songPath, res.status, res.statusText)
+			if (!res.ok) {
+				throw new Error(`Fetch failed: ${res.status} ${res.statusText}`)
+			}
+			const blobSource = await res.blob()
+			console.log('[songs.js] Fetched blob for', songPath, 'size:', blobSource.size)
 
-		const blob = await response.blob()
-		const metadata = await parseBlob(blob)
-		const common = metadata.common || {}
-		const primaryPicture = Array.isArray(common.picture) ? common.picture[0] : undefined
+			jsmediatags.read(blobSource, {
+				onSuccess: function(tag) {
+					const tags = tag?.tags || {}
+					console.debug('[songs.js] raw jsmediatags for', songPath, tags)
 
-		return {
-			id: stem,
-			title: common.title || fallbackTitle,
-			artist: common.artist || 'Unknown Artist',
-			album: common.album || '',
-			file: songPath,
-			lyricsText: lyricTextMap[stem.toLowerCase()] || '',
-			date: normalizeDate(common),
-			coverUrl: pictureToObjectUrl(primaryPicture),
+					const title = getTagText(tags.title)
+					const artist = getTagText(tags.artist, tags.performerInfo)
+					const album = getTagText(tags.album)
+
+					let coverUrl = ''
+					if (tags.picture && tags.picture.data) {
+						const { data, format } = tags.picture
+						const byteArray = new Uint8Array(data)
+						const blob = new Blob([byteArray], { type: format || 'image/jpeg' })
+						coverUrl = URL.createObjectURL(blob)
+					}
+
+					resolve({
+						id: stem,
+						title: title || fallbackTitle,
+						artist: artist || 'Unknown Artist',
+						album: album || '',
+						file: songPath,
+						lyricsText: lyricTextMap[stem.toLowerCase()] || '',
+						date: '1970-01-01',
+						coverUrl,
+					})
+				},
+				onError: function(error) {
+					console.warn('[songs.js] jsmediatags failed for', songPath, error)
+					resolve({
+						id: stem,
+						title: fallbackTitle,
+						artist: 'Unknown Artist',
+						album: '',
+						file: songPath,
+						lyricsText: lyricTextMap[stem.toLowerCase()] || '',
+						date: '1970-01-01',
+						coverUrl: '',
+					})
+				}
+			})
+		} catch (e) {
+			console.warn('[songs.js] Unexpected error reading tags for', songPath, e)
+			resolve({
+				id: stem,
+				title: fallbackTitle,
+				artist: 'Unknown Artist',
+				album: '',
+				file: songPath,
+				lyricsText: lyricTextMap[stem.toLowerCase()] || '',
+				date: '1970-01-01',
+				coverUrl: '',
+			})
 		}
-	} catch (error) {
-		console.warn('[songs.js] Failed to parse metadata for', songPath, error)
-		return {
-			id: stem,
-			title: fallbackTitle,
-			artist: 'Unknown Artist',
-			album: '',
-			file: songPath,
-			lyricsText: lyricTextMap[stem.toLowerCase()] || '',
-			date: '1970-01-01',
-			coverUrl: '',
-		}
-	}
+	})
 }
 
-const loadSongs = async () => {
-	const songPaths = Object.values(songModules)
+// Build minimal song list synchronously so the app can start quickly and audio can load.
+const songPaths = Object.values(songModules)
+const songs = songPaths.map((songPath, index) => {
+	const stem = getFileNameWithoutExt(songPath)
 
-	const parsedSongs = await Promise.all(songPaths.map((songPath) => parseSongMetadata(songPath)))
-
-	const sortedSongs = parsedSongs.sort((a, b) => Date.parse(b.date) - Date.parse(a.date))
-
-	if (sortedSongs.length === 0) {
-		console.warn('[songs.js] No songs found in src/songs')
-	} else {
-		console.log('[songs.js] Loaded', sortedSongs.length, 'songs from MP3 metadata')
+	return {
+		id: `${stem}:${index}`,
+		title: stem,
+		artist: 'Unknown Artist',
+		album: '',
+		file: songPath,
+		lyricsText: lyricTextMap[stem.toLowerCase()] || '',
+		date: '1970-01-01',
+		coverUrl: '',
 	}
+})
 
-	return sortedSongs
-}
+console.log('[songs.js] Exporting', songs.length, 'minimal songs; parsing metadata in background')
 
-const songs = await loadSongs()
+// Parse metadata sequentially in background to avoid many concurrent requests that can abort.
+(async function parseInBackground() {
+	for (const song of songs) {
+		try {
+			const meta = await parseSongMetadata(song.file)
+			if (meta) {
+				song.title = meta.title || song.title
+				song.artist = meta.artist || song.artist
+				song.album = meta.album || song.album
+				song.lyricsText = meta.lyricsText || song.lyricsText
+				song.date = meta.date || song.date
+				if (meta.coverUrl) song.coverUrl = meta.coverUrl
+
+				try {
+					window.dispatchEvent(new CustomEvent('srijanverse:song-updated', { detail: { id: song.id } }))
+				} catch (e) {
+					// ignore non-browser environments
+				}
+			}
+		} catch (err) {
+			console.warn('[songs.js] Background parse failed for', song.file, err)
+		}
+	}
+})()
 
 export default songs

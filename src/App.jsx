@@ -164,12 +164,25 @@ function App() {
   const [diaryMood, setDiaryMood] = useState('Memory')
   const [installPromptEvent, setInstallPromptEvent] = useState(null)
   const [isPwaInstalled, setIsPwaInstalled] = useState(() => window.matchMedia('(display-mode: standalone)').matches)
+  // increment to force re-render when background metadata parsing updates songs
+  const [metadataVersion, setMetadataVersion] = useState(0)
 
   const lastTrackedSongIdRef = useRef(null)
 
   const allSongIndexes = useMemo(() => songs.map((_, index) => index), [])
   const [playQueue, setPlayQueue] = useState(allSongIndexes)
   const [queuePosition, setQueuePosition] = useState(0)
+
+  useEffect(() => {
+    const handler = () => setMetadataVersion((v) => v + 1)
+    window.addEventListener('srijanverse:song-updated', handler)
+    return () => window.removeEventListener('srijanverse:song-updated', handler)
+  }, [])
+
+  // include metadataVersion in deps where we want to react to metadata updates
+  useEffect(() => {
+    // noop: this effect exists to trigger re-evaluations when metadataVersion increments
+  }, [metadataVersion])
 
   useEffect(() => {
     document.body.classList.toggle('theme-light', theme === 'light')

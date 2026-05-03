@@ -1,5 +1,8 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { Buffer } from 'buffer'
+// provide Buffer global for libraries expecting Node Buffer in browser
+if (typeof globalThis.Buffer === 'undefined') globalThis.Buffer = Buffer
 import './index.css'
 import App from './App.jsx'
 import faviconUrl from './assets/favicon.ico?url'
