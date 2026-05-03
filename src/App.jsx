@@ -339,7 +339,7 @@ function App() {
         artist: 'SrijanVerse',
         album: '',
         file: '',
-        lyrics: '',
+        lyricsText: '',
       }
       console.log('[App] CurrentSong changed:', { index: currentSongIndex, id: song.id, title: song.title, file: song.file, songsCount: songs.length })
       return song

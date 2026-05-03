@@ -1,8 +1,15 @@
 import { parseBlob } from 'music-metadata-browser'
 
-const songModules = import.meta.glob('/public/songs/*.mp3', {
+const songModules = import.meta.glob('../songs/*.mp3', {
 	eager: true,
 	import: 'default',
+	query: '?url',
+})
+
+const lyricModules = import.meta.glob('../lyrics/*.lrc', {
+	eager: true,
+	import: 'default',
+	query: '?raw',
 })
 
 const getFileNameWithoutExt = (path) => {
@@ -36,6 +43,16 @@ const pictureToObjectUrl = (picture) => {
 	return URL.createObjectURL(imageBlob)
 }
 
+const buildLyricMap = () => {
+	return Object.entries(lyricModules).reduce((acc, [filePath, rawText]) => {
+		const stem = getFileNameWithoutExt(filePath)
+		acc[stem.toLowerCase()] = typeof rawText === 'string' ? rawText : ''
+		return acc
+	}, {})
+}
+
+const lyricTextMap = buildLyricMap()
+
 const parseSongMetadata = async (songPath) => {
 	const stem = getFileNameWithoutExt(songPath)
 	const fallbackTitle = stem
@@ -57,7 +74,7 @@ const parseSongMetadata = async (songPath) => {
 			artist: common.artist || 'Unknown Artist',
 			album: common.album || '',
 			file: songPath,
-			lyrics: `/lyrics/${stem}.lrc`,
+			lyricsText: lyricTextMap[stem.toLowerCase()] || '',
 			date: normalizeDate(common),
 			coverUrl: pictureToObjectUrl(primaryPicture),
 		}
@@ -69,7 +86,7 @@ const parseSongMetadata = async (songPath) => {
 			artist: 'Unknown Artist',
 			album: '',
 			file: songPath,
-			lyrics: `/lyrics/${stem}.lrc`,
+			lyricsText: lyricTextMap[stem.toLowerCase()] || '',
 			date: '1970-01-01',
 			coverUrl: '',
 		}
@@ -78,12 +95,13 @@ const parseSongMetadata = async (songPath) => {
 
 const loadSongs = async () => {
 	const songPaths = Object.values(songModules)
+
 	const parsedSongs = await Promise.all(songPaths.map((songPath) => parseSongMetadata(songPath)))
 
 	const sortedSongs = parsedSongs.sort((a, b) => Date.parse(b.date) - Date.parse(a.date))
 
 	if (sortedSongs.length === 0) {
-		console.warn('[songs.js] No songs found in public/songs')
+		console.warn('[songs.js] No songs found in src/songs')
 	} else {
 		console.log('[songs.js] Loaded', sortedSongs.length, 'songs from MP3 metadata')
 	}

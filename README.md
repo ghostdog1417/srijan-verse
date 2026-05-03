@@ -239,26 +239,21 @@ All persistence failures (private mode/quota) are handled gracefully to keep the
 
 ### PWA support
 
-- `public/manifest.webmanifest` defines app identity and standalone mode.
+- `src/assets/manifest.webmanifest` defines app identity and standalone mode.
 - `beforeinstallprompt` is captured to show custom install action.
 - Install state detected through `display-mode: standalone` and `appinstalled` event.
 
 ### Service worker
 
-- Service worker registered from `src/main.jsx`.
-- App shell is pre-cached on install:
-  - `/`
-  - `/index.html`
-  - `/manifest.webmanifest`
-- Old caches are cleaned on activate.
-- Navigation requests fall back to `/index.html` when offline.
-- Static GET requests use cache-first with network update.
+- Service worker support is currently disabled in this source-only setup.
+- App shell cache behavior is not active until a new root-scoped service worker is added.
+- Navigation requests still fall back to `index.html` through Vite's SPA behavior and deployment rewrites.
 
 ## Song and Poem Content Format
 
 ### Songs
 
-Songs are loaded automatically from `public/songs/*.mp3` and parsed at runtime.
+Songs are loaded automatically from `src/songs/*.mp3` and parsed at runtime.
 
 Song metadata fields (from MP3 tags):
 
@@ -271,15 +266,15 @@ Song metadata fields (from MP3 tags):
 Runtime-generated song fields:
 
 - `id` from MP3 filename
-- `file` path from `public/songs`
-- `lyrics` path auto-derived as `/lyrics/<song-file-name>.lrc`
+- `file` URL from the source MP3 file
+- `lyricsText` loaded automatically from `src/lyrics/*.lrc` when a matching file exists
 
 Songs are sorted newest-first by parsed `Date`.
 
 Tag expectations:
 
-- Place MP3s in `public/songs`.
-- Add matching `.lrc` files in `public/lyrics` when lyrics are available.
+- Place MP3s in `src/songs`.
+- Add matching `.lrc` files in `src/lyrics` when lyrics are available.
 - Embed album art in each MP3 if you want thumbnails shown in the UI.
 
 ### Poems

@@ -13,7 +13,7 @@ import {
   Volume2,
   VolumeX,
 } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 const formatTime = (seconds) => {
   if (!Number.isFinite(seconds) || seconds < 0) {
@@ -121,7 +121,10 @@ function Player({
   const [isLoading, setIsLoading] = useState(false)
   const [hasError, setHasError] = useState(false)
   const [playError, setPlayError] = useState('')
-  const [lyricsLines, setLyricsLines] = useState([])
+  const lyricsLines = useMemo(
+    () => (currentSong.lyricsText ? parseLrc(currentSong.lyricsText) : []),
+    [currentSong.lyricsText],
+  )
   const [visualizerBars, setVisualizerBars] = useState(Array.from({ length: 20 }, () => 8))
 
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0
@@ -178,9 +181,13 @@ function Player({
 
     const baseVolume = Math.max(0, Math.min(1, volume))
     const durationMs = Math.max(250, crossfadeSeconds * 1000)
-    const startedAt = performance.now()
+    let startedAt = null
 
     const tick = (now) => {
+      if (startedAt === null) {
+        startedAt = now
+      }
+
       const progress = Math.min((now - startedAt) / durationMs, 1)
       audio.volume = Math.max(0, baseVolume * (1 - progress))
 
@@ -427,42 +434,6 @@ function Player({
     midFilter.gain.value = selectedPreset.mid
     highFilter.gain.value = selectedPreset.high
   }, [equalizerPreset])
-
-  useEffect(() => {
-    let isCancelled = false
-
-    if (!currentSong.lyrics) {
-      setLyricsLines([])
-      return () => {
-        isCancelled = true
-      }
-    }
-
-    const loadLyrics = async () => {
-      try {
-        const response = await fetch(currentSong.lyrics)
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch lyrics')
-        }
-
-        const text = await response.text()
-        if (!isCancelled) {
-          setLyricsLines(parseLrc(text))
-        }
-      } catch {
-        if (!isCancelled) {
-          setLyricsLines([])
-        }
-      }
-    }
-
-    void loadLyrics()
-
-    return () => {
-      isCancelled = true
-    }
-  }, [currentSong.id, currentSong.lyrics])
 
   const handleSeek = (event) => {
     const nextTime = Number(event.target.value)
