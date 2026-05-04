@@ -1,4 +1,6 @@
-import jsmediatags from 'jsmediatags'
+/* eslint-disable no-unused-vars */
+/* eslint-disable no-async-promise-executor */
+import jsmediatags from 'jsmediatags/dist/jsmediatags.min.js'
 
 const songModules = import.meta.glob('../songs/*.mp3', {
 	eager: true,
