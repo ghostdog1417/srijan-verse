@@ -230,6 +230,10 @@ function Player({
       return
     }
 
+    // Ensure the WebAudio graph exists and is attached to the audio element
+    // before attempting playback so the context isn't left suspended.
+    ensureAudioGraph()
+
     if (isPlaying) {
       console.log('[Play] Pausing playback')
       audio.pause()
@@ -272,6 +276,8 @@ function Player({
 
       try {
         console.log('[Audio] Sync playback attempt:', audio.src)
+        // Ensure audio graph exists when sync-playing (e.g. after source switch)
+        ensureAudioGraph()
         if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
           await audioContextRef.current.resume()
         }
@@ -311,15 +317,17 @@ function Player({
   }, [volume, isMuted])
 
   useEffect(() => {
+    // Lazy-initialize WebAudio graph on-demand. Creation at mount can leave
+    // the AudioContext suspended in production (autoplay policies). We will
+    // create the context and nodes when the user initiates playback.
+  }, [])
+
+  const ensureAudioGraph = () => {
     const audio = audioRef.current
-    if (!audio || sourceNodeRef.current) {
-      return
-    }
+    if (!audio || sourceNodeRef.current) return
 
     const AudioContextClass = window.AudioContext || window.webkitAudioContext
-    if (!AudioContextClass) {
-      return
-    }
+    if (!AudioContextClass) return
 
     try {
       const context = new AudioContextClass()
@@ -355,10 +363,13 @@ function Player({
       highFilterRef.current = highFilter
       analyserRef.current = analyser
       analyserDataRef.current = new Uint8Array(analyser.frequencyBinCount)
-    } catch {
-      // Ignore equalizer setup errors and continue with native audio.
+    } catch (err) {
+      // Ignore equalizer setup errors and continue with native audio playback.
+      console.warn('[Audio] Could not initialize AudioContext:', err)
     }
+  }
 
+  useEffect(() => {
     return () => {
       if (audioContextRef.current) {
         void audioContextRef.current.close()
@@ -453,6 +464,52 @@ function Player({
 
     audio.currentTime = nextTime
     setCurrentTime(nextTime)
+  }
+
+  const testAudioOutput = async () => {
+    try {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext
+      if (!AudioContextClass) {
+        // eslint-disable-next-line no-alert
+        alert('AudioContext not available in this browser')
+        return
+      }
+
+      const ctx = new AudioContextClass()
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+
+      osc.type = 'sine'
+      osc.frequency.value = 880
+      gain.gain.value = 0.0001
+
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+
+      const now = ctx.currentTime
+      gain.gain.setValueAtTime(0.0001, now)
+      gain.gain.exponentialRampToValueAtTime(0.12, now + 0.02)
+
+      osc.start(now)
+
+      // stop after a short beep
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.2)
+      osc.stop(now + 0.21)
+
+      // close context shortly after
+      setTimeout(() => {
+        try {
+          void ctx.close()
+        } catch (e) {
+          // ignore
+        }
+      }, 500)
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Test audio failed', error)
+      // eslint-disable-next-line no-alert
+      alert(`Test audio failed: ${error?.message || error}`)
+    }
   }
 
   const handleTimeUpdate = (event) => {
@@ -600,7 +657,8 @@ function Player({
               <div className="flex items-center gap-2 text-brand-muted">
                 <button type="button" onClick={onToggleMute} className="hover:text-white">{isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}</button>
                 <input type="range" min="0" max="1" step="0.01" value={volume} onChange={(event) => onVolumeChange(Number(event.target.value))} className="h-1.5 w-28 cursor-pointer appearance-none rounded-full bg-white/20" />
-
+                <button type="button" onClick={testAudioOutput} className="ml-2 rounded-md border border-white/10 bg-white/5 px-2 py-1 text-xs text-white hover:bg-white/10">Test Output</button>
+                <button type="button" onClick={() => window.open(currentSong.file, '_blank')} className="ml-2 rounded-md border border-white/10 bg-white/5 px-2 py-1 text-xs text-white hover:bg-white/10">Open in new tab</button>
                 {hasError ? (
                   <div className="ml-auto inline-flex items-center gap-2 rounded-full border border-red-500/40 bg-red-500/10 px-3 py-1 text-xs text-red-300" title={playError || 'Audio unavailable'}><AlertCircle size={14} />Audio unavailable</div>
                 ) : isLoading ? (

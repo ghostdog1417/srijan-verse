@@ -169,7 +169,7 @@ function App() {
 
   const lastTrackedSongIdRef = useRef(null)
 
-  const allSongIndexes = useMemo(() => songs.map((_, index) => index), [])
+  const allSongIndexes = useMemo(() => songs.map((_, index) => index), [metadataVersion])
   const [playQueue, setPlayQueue] = useState(allSongIndexes)
   const [queuePosition, setQueuePosition] = useState(0)
 
@@ -357,10 +357,10 @@ function App() {
       console.log('[App] CurrentSong changed:', { index: currentSongIndex, id: song.id, title: song.title, file: song.file, songsCount: songs.length })
       return song
     },
-    [currentSongIndex],
+    [currentSongIndex, metadataVersion],
   )
 
-  const songEntries = useMemo(() => songs.map((song, index) => ({ song, index })), [])
+  const songEntries = useMemo(() => songs.map((song, index) => ({ song, index })), [metadataVersion])
 
   const recentRankMap = useMemo(() => {
     const rankMap = {}
